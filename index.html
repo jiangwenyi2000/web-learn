@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Space | Together</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        /* Custom styles for the glass effect */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        body {
+            /* Using a soft gradient background */
+            background: linear-gradient(135deg, #fce7f3 0%, #e0e7ff 100%);
+            min-height: 100vh;
+            cursor: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><text y='28' font-size='28'>🥕</text></svg>") 4 4, auto;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s ease; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Hero Section Styles */
+        .hero-section {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .hero-photo {
+            width: 100%;
+            border-radius: 3rem;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            position: relative;
+            animation: heroFadeIn 0.8s ease-out;
+        }
+
+        .hero-photo img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.5s ease;
+        }
+
+        .hero-photo:hover img {
+            transform: scale(1.02);
+        }
+
+        .hero-content {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 3rem;
+            padding: 3rem;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+            animation: heroFadeIn 0.8s ease-out 0.2s both;
+        }
+
+        .hero-title {
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, #ec4899 0%, #6366f1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 40px rgba(236, 72, 153, 0.2);
+            margin-bottom: 1rem;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1rem, 2.5vw, 1.3rem);
+            color: rgba(75, 85, 99, 0.7);
+            margin-bottom: 2rem;
+        }
+
+        .hero-metrics {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .hero-metric {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 1.5rem 2.5rem;
+            border-radius: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+            transition: all 0.3s ease;
+            min-width: 180px;
+        }
+
+        .hero-metric:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(31, 38, 135, 0.15);
+        }
+
+        .hero-metric-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ec4899 0%, #6366f1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-metric-label {
+            font-size: 0.9rem;
+            color: rgba(75, 85, 99, 0.6);
+            margin-top: 0.5rem;
+        }
+
+        @keyframes heroFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 英雄区块动画 */
+        @keyframes heroFadeIn {
+            0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .hero-section {
+            animation: heroFadeIn 0.8s ease-out;
+        }
+
+        .hero-glow {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.3) 0%, transparent 70%);
+            border-radius: 50%;
+            filter: blur(60px);
+            animation: float 6s ease-in-out infinite;
+            z-index: 1;
+        }
+
+        .shimmer-text {
+            background: linear-gradient(90deg, #ec4899, #8b5cf6, #ec4899);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 3s linear infinite;
+        }
+
+        .hero-img-overlay {
+            background: linear-gradient(
+                135deg,
+                rgba(236, 72, 153, 0.25) 0%,
+                rgba(139, 92, 246, 0.25) 100%
+            );
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 font-sans text-gray-800">
+
+    <!-- 身份选择屏 -->
+    <div id="identityScreen" class="fixed inset-0 z-[100] flex items-center justify-center" style="background: linear-gradient(135deg, #fce7f3 0%, #e0e7ff 100%);">
+        <div class="glass-card p-10 rounded-3xl shadow-2xl text-center max-w-md w-full mx-4">
+            <h2 class="text-3xl font-bold mb-2 bg-gradient-to-r from-pink-500 to-indigo-500 bg-clip-text" style="-webkit-text-fill-color:transparent;">Welcome Back</h2>
+            <p class="text-gray-500 mb-8">你是谁？</p>
+            <div class="flex gap-4 justify-center">
+                <button onclick="chooseIdentity('Akso')" class="flex-1 py-6 px-4 rounded-2xl bg-white/60 border-2 border-transparent hover:border-pink-400 hover:shadow-lg transition-all group">
+                    <span class="text-3xl block mb-2">🦋</span>
+                    <span class="text-lg font-bold text-gray-700 group-hover:text-pink-500 transition-colors">Akso</span>
+                </button>
+                <button onclick="chooseIdentity('Maine')" class="flex-1 py-6 px-4 rounded-2xl bg-white/60 border-2 border-transparent hover:border-indigo-400 hover:shadow-lg transition-all group">
+                    <span class="text-3xl block mb-2">💎</span>
+                    <span class="text-lg font-bold text-gray-700 group-hover:text-indigo-500 transition-colors">Maine</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 glass-card px-6 py-3 rounded-full shadow-2xl flex space-x-8">
+        <button onclick="showTab('home')" class="hover:text-pink-500 transition-colors"><i data-lucide="heart"></i></button>
+        <button onclick="showTab('map')" class="hover:text-blue-500 transition-colors"><i data-lucide="map-pin"></i></button>
+        <button onclick="showTab('photos')" class="hover:text-purple-500 transition-colors"><i data-lucide="image"></i></button>
+        <button onclick="showTab('notes')" class="hover:text-pink-500 transition-colors"><i data-lucide="book-open"></i></button>
+    </nav>
+
+    <main class="max-w-4xl mx-auto mt-10 mb-24">
+        
+        <section id="home" class="tab-content active">
+            <div class="hero-section">
+                <div class="hero-photo">
+                    <img src="images/hero.jpg" alt="Our Photo" />
+                </div>
+                <div class="hero-content">
+                    <h1 class="hero-title">💎姜闻一 & 孙格格🦋</h1>
+                    <p class="hero-subtitle">Since 2026.01.25 - Our Little Corner of the Internet</p>
+                    <div class="hero-metrics">
+                        <div class="hero-metric" id="loveDays">
+                            <div class="hero-metric-value">❤️ ... 天</div>
+                            <div class="hero-metric-label">已经相爱</div>
+                        </div>
+                        <div class="hero-metric">
+                            <div class="hero-metric-value">📍 4</div>
+                            <div class="hero-metric-label">城市足迹</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="map" class="tab-content">
+            <div class="glass-card p-6 rounded-3xl shadow-xl min-h-[400px]">
+                <h2 class="text-2xl font-semibold mb-4 flex items-center">
+                    <i data-lucide="map" class="mr-2 text-blue-500"></i> Our Footprints
+                </h2>
+                <div id="footprintMap" class="w-full h-[500px] rounded-2xl overflow-hidden"></div>
+            </div>
+        </section>
+
+        <section id="photos" class="tab-content">
+            <div class="glass-card p-6 rounded-3xl shadow-xl">
+                <h2 class="text-2xl font-semibold mb-4 flex items-center">
+                    <i data-lucide="camera" class="mr-2 text-purple-500"></i> Sweet Moments
+                </h2>
+                <div class="relative overflow-hidden rounded-2xl h-96 bg-gray-200 group">
+                    <img id="carouselImage" src="images/_cgi-bin_mmwebwx-bin_webwxgetmsgimg__&amp;MsgID=2055690721919063109&skey=@crypt_656fb460_70353ef50c5c7ccf7cd35c3448ded187&mmweb_appid=wx_webfilehelper.jpg" class="w-full h-full object-cover transition-all duration-500" alt="Couple photo">
+                    <button onclick="prevPhoto()" class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/50 p-2 rounded-full hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity">
+                        <i data-lucide="chevron-left"></i>
+                    </button>
+                    <button onclick="nextPhoto()" class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/50 p-2 rounded-full hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity">
+                        <i data-lucide="chevron-right"></i>
+                    </button>
+                    <div id="photoCounter" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/30 text-white text-sm px-3 py-1 rounded-full backdrop-blur-sm">1 / 8</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="notes" class="tab-content">
+            <div class="glass-card p-8 rounded-3xl shadow-xl">
+                <h2 class="text-2xl font-semibold mb-6 flex items-center">
+                    <i data-lucide="book-open" class="mr-2 text-pink-500"></i> Love Journal
+                </h2>
+                
+                <div class="mb-6">
+                    <textarea id="noteInput" class="w-full p-4 rounded-2xl bg-white/50 border border-white/30 focus:outline-none focus:ring-2 focus:ring-pink-300" placeholder="写下此刻的想法..."></textarea>
+                    <div class="flex items-center gap-2 mt-2 mb-2">
+                        <span class="text-sm text-gray-500">此刻心情：</span>
+                        <button onclick="selectMood(this, '🥰')" class="mood-btn text-2xl px-2 py-1 rounded-xl hover:scale-110 transition-all">🥰</button>
+                        <button onclick="selectMood(this, '😎')" class="mood-btn text-2xl px-2 py-1 rounded-xl hover:scale-110 transition-all">😎</button>
+                        <button onclick="selectMood(this, '😴')" class="mood-btn text-2xl px-2 py-1 rounded-xl hover:scale-110 transition-all">😴</button>
+                        <button onclick="selectMood(this, '🥺')" class="mood-btn text-2xl px-2 py-1 rounded-xl hover:scale-110 transition-all">🥺</button>
+                        <button onclick="selectMood(this, '🥳')" class="mood-btn text-2xl px-2 py-1 rounded-xl hover:scale-110 transition-all">🥳</button>
+                        <button onclick="selectMood(this, '😡')" class="mood-btn text-2xl px-2 py-1 rounded-xl hover:scale-110 transition-all">😡</button>
+                    </div>
+                    <button onclick="saveNote()" class="w-full bg-pink-500 text-white py-3 rounded-xl hover:bg-pink-600 transition-all font-bold">
+                        添加到回忆
+                    </button>
+                </div>
+
+                <div id="notesContainer" class="space-y-4 max-h-96 overflow-y-auto pr-2">
+                    </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+    // 1. 优先初始化图标，防止后面的代码报错影响 UI 展示
+    lucide.createIcons();
+
+    // 身份选择
+    let currentUser = localStorage.getItem('identity') || '';
+    function chooseIdentity(name) {
+        currentUser = name;
+        localStorage.setItem('identity', name);
+        document.getElementById('identityScreen').style.display = 'none';
+    }
+    // 如果已选择过身份，直接跳过
+    if (currentUser) {
+        document.getElementById('identityScreen').style.display = 'none';
+    }
+
+    // 2. Supabase 配置 - 修改了变量名以避免冲突
+    const SUPABASE_URL = 'https://afyhhvhilyvslpxxtajc.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_BE-C2HTxFSHbCZomAvl_Dg_TVF-URkF'; // 建议检查你的 Key 是否正确
+
+    // 注意这里：我们将变量名改成了 supabaseClient
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    function renderNotes(notes) {
+        const container = document.getElementById('notesContainer');
+        if (!container) return;
+
+        container.innerHTML = notes.map(note => `
+            <div class="bg-white/40 p-4 rounded-2xl border border-white/20 animate-fadeIn">
+                <div class="flex items-start gap-3">
+                    ${note.mood ? `<span class="text-2xl">${note.mood}</span>` : ''}
+                    <div class="flex-1">
+                        <p class="text-gray-800">${note.content}</p>
+                        <div class="mt-2 text-xs text-gray-400 flex justify-between">
+                            <span>By: ${note.author}</span>
+                            <span>${new Date(note.created_at).toLocaleString()}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // 3. 修改后续函数中引用的变量名
+    async function fetchNotes() {
+        // 这里改用 supabaseClient
+        const { data, error } = await supabaseClient
+            .from('love_notes')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching notes:', error);
+            return;
+        }
+        renderNotes(data);
+    }
+
+    let selectedMood = '';
+    function selectMood(btn, emoji) {
+        document.querySelectorAll('.mood-btn').forEach(b => {
+            b.classList.remove('bg-pink-200', 'ring-2', 'ring-pink-400');
+        });
+        if (selectedMood === emoji) {
+            selectedMood = '';
+        } else {
+            selectedMood = emoji;
+            btn.classList.add('bg-pink-200', 'ring-2', 'ring-pink-400');
+        }
+    }
+
+    async function saveNote() {
+        const input = document.getElementById('noteInput');
+        const content = input.value.trim();
+        if (!content) return;
+
+        const { error } = await supabaseClient
+            .from('love_notes')
+            .insert([{ content: content, author: currentUser || 'Anonymous', mood: selectedMood || null }]);
+
+        if (error) {
+            alert('无法保存笔记，请检查数据库权限或网络');
+            console.error(error);
+        } else {
+            input.value = '';
+            selectedMood = '';
+            document.querySelectorAll('.mood-btn').forEach(b => {
+                b.classList.remove('bg-pink-200', 'ring-2', 'ring-pink-400');
+            });
+            fetchNotes();
+        }
+    }
+
+    // 页面加载时执行
+    fetchNotes();
+
+    // 计算恋爱天数
+    function calculateLoveDays() {
+        const startDate = new Date('2026-01-25');
+        const currentDate = new Date();
+        const diffTime = currentDate - startDate;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        document.getElementById('loveDays').innerHTML = `❤️ 已经相爱 ${diffDays} 天`;
+    }
+    calculateLoveDays();
+
+    // --- 以下是原本的其他逻辑（切换标签、照片轮播、心情记录） ---
+    function showTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.getElementById(tabId).classList.add('active');
+        // 切换到地图时需要刷新尺寸，否则 Leaflet 渲染不完整
+        if (tabId === 'map') {
+            setTimeout(() => footprintMap.invalidateSize(), 100);
+        }
+    }
+
+    // 足迹地图
+    const footprintMap = L.map('footprintMap').setView([33.5, 115], 5);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(footprintMap);
+
+    const emojiIcon = L.divIcon({
+        html: '<span style="font-size:2rem;">🦋</span>',
+        className: '',
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+        popupAnchor: [0, -32]
+    });
+
+    const cities = [
+        { name: '北京', lat: 39.9042, lng: 116.4074 },
+        { name: '合肥', lat: 31.8206, lng: 117.2272 },
+        { name: '义乌', lat: 29.3054, lng: 120.0750 },
+        { name: '丽水', lat: 28.4672, lng: 119.9229 }
+    ];
+
+    cities.forEach(city => {
+        L.marker([city.lat, city.lng], { icon: emojiIcon })
+            .addTo(footprintMap)
+            .bindPopup(`<b>${city.name}</b><br>我们来过这里！`);
+    });
+
+    const photos = [
+        "images/_cgi-bin_mmwebwx-bin_webwxgetmsgimg__&MsgID=2055690721919063109&skey=@crypt_656fb460_70353ef50c5c7ccf7cd35c3448ded187&mmweb_appid=wx_webfilehelper.jpg",
+        "images/_cgi-bin_mmwebwx-bin_webwxgetmsgimg__&MsgID=2451338867791475427&skey=@crypt_656fb460_70353ef50c5c7ccf7cd35c3448ded187&mmweb_appid=wx_webfilehelper.jpg",
+        "images/_cgi-bin_mmwebwx-bin_webwxgetmsgimg__&MsgID=2882493939892812871&skey=@crypt_656fb460_70353ef50c5c7ccf7cd35c3448ded187&mmweb_appid=wx_webfilehelper.jpg",
+        "images/_cgi-bin_mmwebwx-bin_webwxgetmsgimg__&MsgID=2972526681059201497&skey=@crypt_656fb460_70353ef50c5c7ccf7cd35c3448ded187&mmweb_appid=wx_webfilehelper.jpg",
+        "images/_cgi-bin_mmwebwx-bin_webwxgetmsgimg__&MsgID=3581685406238328213&skey=@crypt_656fb460_70353ef50c5c7ccf7cd35c3448ded187&mmweb_appid=wx_webfilehelper.jpg",
+        "images/_cgi-bin_mmwebwx-bin_webwxgetmsgimg__&MsgID=4331550977379997303&skey=@crypt_656fb460_70353ef50c5c7ccf7cd35c3448ded187&mmweb_appid=wx_webfilehelper.jpg",
+        "images/_cgi-bin_mmwebwx-bin_webwxgetmsgimg__&MsgID=4726786680260075458&skey=@crypt_656fb460_70353ef50c5c7ccf7cd35c3448ded187&mmweb_appid=wx_webfilehelper.jpg",
+        "images/_cgi-bin_mmwebwx-bin_webwxgetmsgimg__&MsgID=4755120294161851582&skey=@crypt_656fb460_70353ef50c5c7ccf7cd35c3448ded187&mmweb_appid=wx_webfilehelper.jpg",
+        "images/_cgi-bin_mmwebwx-bin_webwxgetmsgimg__&MsgID=7426943103103670792&skey=@crypt_656fb460_70353ef50c5c7ccf7cd35c3448ded187&mmweb_appid=wx_webfilehelper.jpg"
+    ];
+    let currentIdx = 0;
+    function updatePhotoCounter() {
+        document.getElementById('photoCounter').textContent = `${currentIdx + 1} / ${photos.length}`;
+    }
+    function nextPhoto() {
+        currentIdx = (currentIdx + 1) % photos.length;
+        document.getElementById('carouselImage').src = photos[currentIdx];
+        updatePhotoCounter();
+    }
+    function prevPhoto() {
+        currentIdx = (currentIdx - 1 + photos.length) % photos.length;
+        document.getElementById('carouselImage').src = photos[currentIdx];
+        updatePhotoCounter();
+    }
+</script>
+</body>
+</html>
