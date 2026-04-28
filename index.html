@@ -270,8 +270,14 @@
                 </h2>
                 
                 <div class="mb-6">
-                    <textarea id="noteInput" class="w-full p-4 rounded-2xl bg-white/50 border border-white/30 focus:outline-none focus:ring-2 focus:ring-pink-300" placeholder="写下此刻的想法..."></textarea>
-                    <div class="flex items-center gap-2 mt-2 mb-2">
+                    <div class="grid gap-4 md:grid-cols-[1fr_220px]">
+                        <textarea id="noteInput" class="w-full p-4 rounded-2xl bg-white/50 border border-white/30 focus:outline-none focus:ring-2 focus:ring-pink-300" placeholder="写下此刻的想法..."></textarea>
+                        <div class="flex flex-col gap-2">
+                            <label for="eventDateInput" class="text-sm text-gray-500">事件日期</label>
+                            <input id="eventDateInput" type="date" class="w-full p-3 rounded-2xl bg-white/50 border border-white/30 focus:outline-none focus:ring-2 focus:ring-pink-300" />
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 mt-4 mb-2 flex-wrap">
                         <span class="text-sm text-gray-500">此刻心情：</span>
                         <button onclick="selectMood(this, '🥰')" class="mood-btn text-2xl px-2 py-1 rounded-xl hover:scale-110 transition-all">🥰</button>
                         <button onclick="selectMood(this, '😎')" class="mood-btn text-2xl px-2 py-1 rounded-xl hover:scale-110 transition-all">😎</button>
@@ -319,15 +325,18 @@
         const container = document.getElementById('notesContainer');
         if (!container) return;
 
-        container.innerHTML = notes.map(note => `
+        const sortedNotes = [...notes].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        container.innerHTML = sortedNotes.map(note => `
             <div class="bg-white/40 p-4 rounded-2xl border border-white/20 animate-fadeIn">
                 <div class="flex items-start gap-3">
                     ${note.mood ? `<span class="text-2xl">${note.mood}</span>` : ''}
                     <div class="flex-1">
                         <p class="text-gray-800">${note.content}</p>
-                        <div class="mt-2 text-xs text-gray-400 flex justify-between">
+                        <div class="mt-2 text-xs text-gray-400 space-y-1 sm:space-y-0 sm:flex sm:justify-between sm:items-center">
+                            <span>事件日期: ${note.event_date ? new Date(note.event_date).toLocaleDateString() : '未填写'}</span>
+                            <span>记录时间: ${new Date(note.created_at).toLocaleString()}</span>
                             <span>By: ${note.author}</span>
-                            <span>${new Date(note.created_at).toLocaleString()}</span>
                         </div>
                     </div>
                 </div>
@@ -365,18 +374,26 @@
 
     async function saveNote() {
         const input = document.getElementById('noteInput');
+        const dateInput = document.getElementById('eventDateInput');
         const content = input.value.trim();
+        const eventDate = dateInput.value;
         if (!content) return;
 
         const { error } = await supabaseClient
             .from('love_notes')
-            .insert([{ content: content, author: currentUser || 'Anonymous', mood: selectedMood || null }]);
+            .insert([{
+                content: content,
+                author: currentUser || 'Anonymous',
+                mood: selectedMood || null,
+                event_date: eventDate || new Date().toISOString().slice(0, 10)
+            }]);
 
         if (error) {
             alert('无法保存笔记，请检查数据库权限或网络');
             console.error(error);
         } else {
             input.value = '';
+            dateInput.value = new Date().toISOString().slice(0, 10);
             selectedMood = '';
             document.querySelectorAll('.mood-btn').forEach(b => {
                 b.classList.remove('bg-pink-200', 'ring-2', 'ring-pink-400');
@@ -385,7 +402,15 @@
         }
     }
 
+    function initNoteForm() {
+        const dateInput = document.getElementById('eventDateInput');
+        if (dateInput) {
+            dateInput.value = new Date().toISOString().slice(0, 10);
+        }
+    }
+
     // 页面加载时执行
+    initNoteForm();
     fetchNotes();
 
     // 计算恋爱天数
@@ -446,7 +471,6 @@
         "images/photo6.jpg",
         "images/photo7.jpg",
         "images/photo8.jpg",
-        "images/photo9.jpg"
     ];
     let currentIdx = 0;
     function updatePhotoCounter() {
