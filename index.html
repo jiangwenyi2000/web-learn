@@ -234,6 +234,48 @@
                     </div>
                 </div>
             </div>
+            <div class="glass-card p-6 rounded-3xl shadow-xl mt-6">
+                <div class="flex flex-col gap-4">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div>
+                            <h2 class="text-2xl font-semibold">数据看板</h2>
+                            <p class="text-sm text-gray-500">月经周期记录与下次预期提醒</p>
+                        </div>
+                        <div class="flex flex-wrap gap-3">
+                            <div class="bg-white/80 px-4 py-3 rounded-3xl border border-white/40 shadow-sm">
+                                <div class="text-sm text-gray-500">平均周期</div>
+                                <div class="font-bold text-xl">26 天</div>
+                            </div>
+                            <div class="bg-white/80 px-4 py-3 rounded-3xl border border-white/40 shadow-sm">
+                                <div class="text-sm text-gray-500">最近一次开始</div>
+                                <div class="font-bold text-xl">4.15</div>
+                            </div>
+                            <div class="bg-white/80 px-4 py-3 rounded-3xl border border-white/40 shadow-sm">
+                                <div class="text-sm text-gray-500">下次预期</div>
+                                <div id="nextPeriodLabel" class="font-bold text-xl">--</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid lg:grid-cols-3 gap-4">
+                        <div class="bg-white/80 p-5 rounded-3xl border border-white/40 shadow-sm">
+                            <h3 class="font-semibold mb-3">历史周期</h3>
+                            <div id="cycleList" class="space-y-2 text-sm text-gray-600"></div>
+                        </div>
+                        <div class="bg-white/80 p-5 rounded-3xl border border-white/40 shadow-sm">
+                            <h3 class="font-semibold mb-3">提醒</h3>
+                            <p id="cycleReminder" class="text-gray-700 text-sm leading-6"></p>
+                        </div>
+                        <div class="bg-white/80 p-5 rounded-3xl border border-white/40 shadow-sm">
+                            <h3 class="font-semibold mb-3">图表预留区</h3>
+                            <div id="dashboardCharts" class="space-y-3">
+                                <div class="h-20 rounded-3xl bg-gradient-to-r from-pink-100 to-violet-100 flex items-center justify-center text-sm text-gray-500">
+                                    这里可添加新的图表组件
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <section id="map" class="tab-content">
@@ -327,6 +369,53 @@
 
     // 注意这里：我们将变量名改成了 supabaseClient
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const menstrualCycles = [
+        { label: '2.22', date: '2026-02-22' },
+        { label: '3.20', date: '2026-03-20' },
+        { label: '4.15', date: '2026-04-15' }
+    ];
+    const averageCycleDays = 26;
+
+    function addDays(dateString, days) {
+        const date = new Date(dateString);
+        date.setDate(date.getDate() + days);
+        return date;
+    }
+
+    function formatMonthDay(date) {
+        return `${date.getMonth() + 1}.${String(date.getDate()).padStart(2, '0')}`;
+    }
+
+    function renderCycleDashboard() {
+        const cycleList = document.getElementById('cycleList');
+        const nextPeriodLabel = document.getElementById('nextPeriodLabel');
+        const cycleReminder = document.getElementById('cycleReminder');
+        if (!cycleList || !nextPeriodLabel || !cycleReminder) return;
+
+        cycleList.innerHTML = menstrualCycles.map(item => `
+            <div class="flex items-center justify-between rounded-2xl bg-pink-50 px-4 py-3">
+                <span>${item.label}</span>
+                <span class="text-sm text-gray-500">${item.date}</span>
+            </div>
+        `).join('');
+
+        const lastDate = menstrualCycles[menstrualCycles.length - 1].date;
+        const nextDate = addDays(lastDate, averageCycleDays);
+        const now = new Date();
+        const diffDays = Math.ceil((nextDate - now) / (1000 * 60 * 60 * 24));
+
+        nextPeriodLabel.textContent = formatMonthDay(nextDate);
+        if (diffDays > 1) {
+            cycleReminder.textContent = `距离下次月经还有 ${diffDays} 天，建议做好周期记录与健康提醒。`;
+        } else if (diffDays === 1) {
+            cycleReminder.textContent = '明天预期来经，请做好准备。';
+        } else if (diffDays === 0) {
+            cycleReminder.textContent = '今天预期来经，请关注身体变化。';
+        } else {
+            cycleReminder.textContent = `已经超过预计时间 ${Math.abs(diffDays)} 天，请留意是否有不适。`;
+        }
+    }
 
     function renderNotes(notes) {
         const container = document.getElementById('notesContainer');
@@ -423,6 +512,7 @@
 
     // 页面加载时执行
     initNoteForm();
+    renderCycleDashboard();
     fetchNotes();
 
     // 计算恋爱天数
