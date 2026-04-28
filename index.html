@@ -252,6 +252,9 @@
                 </h2>
                 <div class="relative overflow-hidden rounded-2xl h-96 bg-gray-200 group">
                     <img id="carouselImage" src="images/photo1.jpg" class="w-full h-full object-cover transition-all duration-500" alt="Couple photo">
+                    <div id="carouselProgress" class="absolute left-0 right-0 bottom-0 h-2 bg-white/30 opacity-0 transition-opacity duration-300">
+                        <div id="carouselProgressBar" class="h-full w-0 bg-gradient-to-r from-pink-500 to-indigo-500"></div>
+                    </div>
                     <button onclick="prevPhoto()" class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/50 p-2 rounded-full hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity">
                         <i data-lucide="chevron-left"></i>
                     </button>
@@ -325,7 +328,11 @@
         const container = document.getElementById('notesContainer');
         if (!container) return;
 
-        const sortedNotes = [...notes].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        const sortedNotes = [...notes].sort((a, b) => {
+            const aDate = a.event_date ? new Date(a.event_date) : new Date(a.created_at);
+            const bDate = b.event_date ? new Date(b.event_date) : new Date(b.created_at);
+            return bDate - aDate;
+        });
 
         container.innerHTML = sortedNotes.map(note => `
             <div class="bg-white/40 p-4 rounded-2xl border border-white/20 animate-fadeIn">
@@ -350,6 +357,7 @@
         const { data, error } = await supabaseClient
             .from('love_notes')
             .select('*')
+            .order('event_date', { ascending: false })
             .order('created_at', { ascending: false });
 
         if (error) {
@@ -473,17 +481,70 @@
         "images/photo8.jpg",
     ];
     let currentIdx = 0;
+    const carouselImage = document.getElementById('carouselImage');
+    const carouselProgress = document.getElementById('carouselProgress');
+    const carouselProgressBar = document.getElementById('carouselProgressBar');
+    let currentImageObjectURL = '';
+
+    function setCarouselImageBlob(blob) {
+        if (currentImageObjectURL) {
+            URL.revokeObjectURL(currentImageObjectURL);
+        }
+        currentImageObjectURL = URL.createObjectURL(blob);
+        carouselImage.src = currentImageObjectURL;
+    }
+
+    async function loadCarouselImage(url) {
+        carouselProgressBar.style.width = '0%';
+        carouselProgress.classList.add('opacity-100');
+
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('Image load failed');
+            }
+
+            const contentLength = response.headers.get('content-length');
+            if (response.body && contentLength) {
+                const total = parseInt(contentLength, 10);
+                const reader = response.body.getReader();
+                const chunks = [];
+                let loaded = 0;
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    chunks.push(value);
+                    loaded += value.length;
+                    carouselProgressBar.style.width = `${Math.min(100, Math.round((loaded / total) * 100))}%`;
+                }
+
+                const blob = new Blob(chunks);
+                setCarouselImageBlob(blob);
+            } else {
+                const blob = await response.blob();
+                setCarouselImageBlob(blob);
+            }
+        } catch (error) {
+            console.error('Image load failed:', error);
+            carouselImage.src = url;
+        } finally {
+            carouselProgressBar.style.width = '100%';
+            setTimeout(() => carouselProgress.classList.remove('opacity-100'), 250);
+        }
+    }
+
     function updatePhotoCounter() {
         document.getElementById('photoCounter').textContent = `${currentIdx + 1} / ${photos.length}`;
     }
     function nextPhoto() {
         currentIdx = (currentIdx + 1) % photos.length;
-        document.getElementById('carouselImage').src = photos[currentIdx];
+        loadCarouselImage(photos[currentIdx]);
         updatePhotoCounter();
     }
     function prevPhoto() {
         currentIdx = (currentIdx - 1 + photos.length) % photos.length;
-        document.getElementById('carouselImage').src = photos[currentIdx];
+        loadCarouselImage(photos[currentIdx]);
         updatePhotoCounter();
     }
 </script>
