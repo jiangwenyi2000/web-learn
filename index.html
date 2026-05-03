@@ -292,18 +292,51 @@
                 <h2 class="text-2xl font-semibold mb-4 flex items-center">
                     <i data-lucide="camera" class="mr-2 text-purple-500"></i> Sweet Moments
                 </h2>
-                <div class="relative overflow-hidden rounded-2xl h-96 bg-gray-200 group">
-                    <img id="carouselImage" src="images/photo1.jpg" class="w-full h-full object-cover transition-all duration-500" alt="Couple photo">
-                    <div id="carouselProgress" class="absolute left-0 right-0 bottom-0 h-2 bg-white/30 opacity-0 transition-opacity duration-300">
-                        <div id="carouselProgressBar" class="h-full w-0 bg-gradient-to-r from-pink-500 to-indigo-500"></div>
+                <div class="grid gap-6 xl:grid-cols-2">
+                    <div class="bg-white/80 rounded-3xl border border-white/40 shadow-sm p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold">缘起</h3>
+                                <p class="text-sm text-gray-500">故事从这里开始</p>
+                            </div>
+                            <span class="text-sm text-gray-500">1 / 10</span>
+                        </div>
+                        <div class="relative overflow-hidden rounded-3xl h-96 bg-gray-200 group">
+                            <img id="carouselImage_start" src="images/start/photo1.jpg" class="w-full h-full object-cover transition-all duration-500" alt="Start album photo">
+                            <div id="carouselProgress_start" class="absolute left-0 right-0 bottom-0 h-2 bg-white/30 opacity-0 transition-opacity duration-300">
+                                <div id="carouselProgressBar_start" class="h-full w-0 bg-gradient-to-r from-pink-500 to-indigo-500"></div>
+                            </div>
+                            <button onclick="prevPhoto('start')" class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/50 p-2 rounded-full hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity">
+                                <i data-lucide="chevron-left"></i>
+                            </button>
+                            <button onclick="nextPhoto('start')" class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/50 p-2 rounded-full hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity">
+                                <i data-lucide="chevron-right"></i>
+                            </button>
+                            <div id="photoCounter_start" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/30 text-white text-sm px-3 py-1 rounded-full backdrop-blur-sm">1 / 10</div>
+                        </div>
                     </div>
-                    <button onclick="prevPhoto()" class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/50 p-2 rounded-full hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity">
-                        <i data-lucide="chevron-left"></i>
-                    </button>
-                    <button onclick="nextPhoto()" class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/50 p-2 rounded-full hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity">
-                        <i data-lucide="chevron-right"></i>
-                    </button>
-                    <div id="photoCounter" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/30 text-white text-sm px-3 py-1 rounded-full backdrop-blur-sm">1 / 9</div>
+                    <div class="bg-white/80 rounded-3xl border border-white/40 shadow-sm p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold">进行时</h3>
+                                <p class="text-sm text-gray-500">一起书写的点点滴滴</p>
+                            </div>
+                            <span class="text-sm text-gray-500">1 / 9</span>
+                        </div>
+                        <div class="relative overflow-hidden rounded-3xl h-96 bg-gray-200 group">
+                            <img id="carouselImage_going" src="images/going/photo1.jpg" class="w-full h-full object-cover transition-all duration-500" alt="Going album photo">
+                            <div id="carouselProgress_going" class="absolute left-0 right-0 bottom-0 h-2 bg-white/30 opacity-0 transition-opacity duration-300">
+                                <div id="carouselProgressBar_going" class="h-full w-0 bg-gradient-to-r from-pink-500 to-indigo-500"></div>
+                            </div>
+                            <button onclick="prevPhoto('going')" class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/50 p-2 rounded-full hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity">
+                                <i data-lucide="chevron-left"></i>
+                            </button>
+                            <button onclick="nextPhoto('going')" class="absolute right-4 top-1/2 -translate-y-1/2 bg-white/50 p-2 rounded-full hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity">
+                                <i data-lucide="chevron-right"></i>
+                            </button>
+                            <div id="photoCounter_going" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/30 text-white text-sm px-3 py-1 rounded-full backdrop-blur-sm">1 / 9</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -564,33 +597,66 @@
             .bindPopup(`<b>${city.name}</b><br>我们来过这里！`);
     });
 
-    const photos = [
-        "images/photo1.jpg",
-        "images/photo2.jpg",
-        "images/photo3.jpg",
-        "images/photo4.jpg",
-        "images/photo5.jpg",
-        "images/photo6.jpg",
-        "images/photo7.jpg",
-        "images/photo8.jpg",
-    ];
-    let currentIdx = 0;
-    const carouselImage = document.getElementById('carouselImage');
-    const carouselProgress = document.getElementById('carouselProgress');
-    const carouselProgressBar = document.getElementById('carouselProgressBar');
-    let currentImageObjectURL = '';
-
-    function setCarouselImageBlob(blob) {
-        if (currentImageObjectURL) {
-            URL.revokeObjectURL(currentImageObjectURL);
+    const photoGroups = {
+        start: {
+            photos: [
+                "images/start/photo1.jpg",
+                "images/start/photo2.jpg",
+                "images/start/photo3.jpg",
+                "images/start/photo4.jpg",
+                "images/start/photo5.jpg",
+                "images/start/photo6.jpg",
+                "images/start/photo7.jpg",
+                "images/start/photo8.jpg",
+                "images/start/photo9.jpg",
+                "images/start/photo10.jpg"
+            ],
+            currentIdx: 0,
+            objectURL: ''
+        },
+        going: {
+            photos: [
+                "images/going/photo1.jpg",
+                "images/going/photo2.jpg",
+                "images/going/photo3.jpg",
+                "images/going/photo4.jpg",
+                "images/going/photo5.jpg",
+                "images/going/photo6.jpg",
+                "images/going/photo7.jpg",
+                "images/going/photo8.jpg",
+                "images/going/photo9.jpg"
+            ],
+            currentIdx: 0,
+            objectURL: ''
         }
-        currentImageObjectURL = URL.createObjectURL(blob);
-        carouselImage.src = currentImageObjectURL;
+    };
+
+    function getCarouselElements(groupKey) {
+        return {
+            image: document.getElementById(`carouselImage_${groupKey}`),
+            progress: document.getElementById(`carouselProgress_${groupKey}`),
+            bar: document.getElementById(`carouselProgressBar_${groupKey}`),
+            counter: document.getElementById(`photoCounter_${groupKey}`)
+        };
     }
 
-    async function loadCarouselImage(url) {
-        carouselProgressBar.style.width = '0%';
-        carouselProgress.classList.add('opacity-100');
+    function setCarouselImageBlob(groupKey, blob) {
+        const group = photoGroups[groupKey];
+        const elements = getCarouselElements(groupKey);
+        if (!elements.image) return;
+        if (group.objectURL) {
+            URL.revokeObjectURL(group.objectURL);
+        }
+        group.objectURL = URL.createObjectURL(blob);
+        elements.image.src = group.objectURL;
+    }
+
+    async function loadCarouselImage(groupKey, url) {
+        const elements = getCarouselElements(groupKey);
+        if (!elements.image || !elements.progress || !elements.bar) return;
+
+        elements.bar.style.width = '0%';
+        elements.progress.classList.add('opacity-100');
 
         try {
             const response = await fetch(url);
@@ -610,36 +676,43 @@
                     if (done) break;
                     chunks.push(value);
                     loaded += value.length;
-                    carouselProgressBar.style.width = `${Math.min(100, Math.round((loaded / total) * 100))}%`;
+                    elements.bar.style.width = `${Math.min(100, Math.round((loaded / total) * 100))}%`;
                 }
 
                 const blob = new Blob(chunks);
-                setCarouselImageBlob(blob);
+                setCarouselImageBlob(groupKey, blob);
             } else {
                 const blob = await response.blob();
-                setCarouselImageBlob(blob);
+                setCarouselImageBlob(groupKey, blob);
             }
         } catch (error) {
             console.error('Image load failed:', error);
-            carouselImage.src = url;
+            elements.image.src = url;
         } finally {
-            carouselProgressBar.style.width = '100%';
-            setTimeout(() => carouselProgress.classList.remove('opacity-100'), 250);
+            elements.bar.style.width = '100%';
+            setTimeout(() => elements.progress.classList.remove('opacity-100'), 250);
         }
     }
 
-    function updatePhotoCounter() {
-        document.getElementById('photoCounter').textContent = `${currentIdx + 1} / ${photos.length}`;
+    function updatePhotoCounter(groupKey) {
+        const group = photoGroups[groupKey];
+        const elements = getCarouselElements(groupKey);
+        if (!elements.counter) return;
+        elements.counter.textContent = `${group.currentIdx + 1} / ${group.photos.length}`;
     }
-    function nextPhoto() {
-        currentIdx = (currentIdx + 1) % photos.length;
-        loadCarouselImage(photos[currentIdx]);
-        updatePhotoCounter();
+
+    function nextPhoto(groupKey) {
+        const group = photoGroups[groupKey];
+        group.currentIdx = (group.currentIdx + 1) % group.photos.length;
+        loadCarouselImage(groupKey, group.photos[group.currentIdx]);
+        updatePhotoCounter(groupKey);
     }
-    function prevPhoto() {
-        currentIdx = (currentIdx - 1 + photos.length) % photos.length;
-        loadCarouselImage(photos[currentIdx]);
-        updatePhotoCounter();
+
+    function prevPhoto(groupKey) {
+        const group = photoGroups[groupKey];
+        group.currentIdx = (group.currentIdx - 1 + group.photos.length) % group.photos.length;
+        loadCarouselImage(groupKey, group.photos[group.currentIdx]);
+        updatePhotoCounter(groupKey);
     }
 </script>
 </body>
